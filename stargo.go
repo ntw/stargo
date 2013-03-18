@@ -142,6 +142,7 @@ func x(tr *tar.Reader) error {
 		gid, _ := strconv.Atoi(u.Gid)
 		if err := os.Chown(hdr.Name, uid, gid); err != nil { return err }
 		if err := os.Chmod(hdr.Name, fi.Mode()); err != nil { return err }
+		if err := os.Chtimes(hdr.Name, hdr.AccessTime, hdr.ModTime); err != nil { return err }
 	}
 	return nil //shouldn't get here
 }
