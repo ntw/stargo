@@ -137,12 +137,11 @@ func x(tr *tar.Reader) error {
 		default:
 			log.Printf("Unknown type for %s\n", hdr.Name)
 		}
-		//if err := os.Chown(hdr.Name, hdr.Uid, hdr.Gid); err != nil { return err }
 		uid, _ := strconv.Atoi(u.Uid)
 		gid, _ := strconv.Atoi(u.Gid)
 		if err := os.Chown(hdr.Name, uid, gid); err != nil { return err }
 		if err := os.Chmod(hdr.Name, fi.Mode()); err != nil { return err }
-		if err := os.Chtimes(hdr.Name, hdr.AccessTime, hdr.ModTime); err != nil { return err }
+		if err := os.Chtimes(hdr.Name, _, hdr.ModTime); err != nil { return err }
 	}
 	return nil //shouldn't get here
 }
