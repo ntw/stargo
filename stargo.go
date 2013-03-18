@@ -5,8 +5,8 @@ import (
 	"os"
 	"fmt"
 	"log"
+	"os/user"
 	"archive/tar"
-	//"./pkg/archive/tar"
 	"compress/gzip"
 	"path/filepath"
 )
@@ -101,12 +101,15 @@ func t(tr *tar.Reader) error {
 func x(tr *tar.Reader) error {
 	for {
 		hdr, err := tr.Next()
+		fi := hdr.FileInfo()
+		u, err := user.Current()
+		if err != nil { return err }
 		if err == io.EOF { return nil }
 		if err != nil { return err }
 
 		switch hdr.Typeflag {
 		case tar.TypeReg, tar.TypeRegA:
-			f, err := os.OpenFile(hdr.Name, os.O_CREATE, hdr.Mode)
+			f, err := os.OpenFile(hdr.Name, os.O_CREATE | os.O_WRONLY, fi.Mode())
 			if err != nil {
 				return err
 			}
@@ -120,7 +123,7 @@ func x(tr *tar.Reader) error {
 		case tar.TypeChar:
 		case tar.TypeBlock:
 		case tar.TypeDir:
-			if err := os.MkdirAll(hdr.Name, hdr.Mode); err != nil { return err }
+			if err := os.MkdirAll(hdr.Name, fi.Mode()); err != nil { return err }
 		case tar.TypeFifo:
 		case tar.TypeCont:
 			//reserved
@@ -131,8 +134,9 @@ func x(tr *tar.Reader) error {
 		default:
 			log.Printf("Unknown type for %s\n", hdr.Name)
 		}
-		if err := os.Chown(hdr.Name, hdr.Uid, hdr.Gid); err != nil { return err }
-		if err := os.Chmod(hdr.Name, hdr.Mode); err != nil { return err }
+		//if err := os.Chown(hdr.Name, hdr.Uid, hdr.Gid); err != nil { return err }
+		if err := os.Chown(hdr.Name, u.Uid, u.Gid); err != nil { return err }
+		if err := os.Chmod(hdr.Name, fi.Mode()); err != nil { return err }
 	}
 	return nil //shouldn't get here
 }
