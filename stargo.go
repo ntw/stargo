@@ -5,6 +5,7 @@ import (
 	"os"
 	"fmt"
 	"log"
+	"strconv"
 	"os/user"
 	"archive/tar"
 	"compress/gzip"
@@ -99,13 +100,13 @@ func t(tr *tar.Reader) error {
 }
 
 func x(tr *tar.Reader) error {
-	for {
-		hdr, err := tr.Next()
-		fi := hdr.FileInfo()
 		u, err := user.Current()
 		if err != nil { return err }
+	for {
+		hdr, err := tr.Next()
 		if err == io.EOF { return nil }
 		if err != nil { return err }
+		fi := hdr.FileInfo()
 
 		switch hdr.Typeflag {
 		case tar.TypeReg, tar.TypeRegA:
@@ -120,6 +121,8 @@ func x(tr *tar.Reader) error {
 		case tar.TypeLink:
 			//hard link
 		case tar.TypeSymlink:
+			if err := os.Symlink(hdr.Linkname, hdr.Name); err != nil { return err }
+			continue
 		case tar.TypeChar:
 		case tar.TypeBlock:
 		case tar.TypeDir:
@@ -135,7 +138,9 @@ func x(tr *tar.Reader) error {
 			log.Printf("Unknown type for %s\n", hdr.Name)
 		}
 		//if err := os.Chown(hdr.Name, hdr.Uid, hdr.Gid); err != nil { return err }
-		if err := os.Chown(hdr.Name, u.Uid, u.Gid); err != nil { return err }
+		uid, _ := strconv.Atoi(u.Uid)
+		gid, _ := strconv.Atoi(u.Gid)
+		if err := os.Chown(hdr.Name, uid, gid); err != nil { return err }
 		if err := os.Chmod(hdr.Name, fi.Mode()); err != nil { return err }
 	}
 	return nil //shouldn't get here
