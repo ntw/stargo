@@ -48,8 +48,28 @@ func usage() {
 }
 
 func c(locs []string, zflag bool) {
+	var f io.Writer
+	if zflag {
+		// the commented lines in this block are because they changed the implementation of gzip.NewWriter
+		// gw, err := gzip.NewWriter(os.Stdout)
+		gw := gzip.NewWriter(os.Stdout)
+		defer gw.Close()
+		// if err != nil { log.Fatal(err) }
+		f = gw
+	} else {
+		f = os.Stdout
+	}
+
+	tw := tar.NewWriter(f)
+	defer tw.Close()
 
 	c_file := func(loc string, info os.FileInfo, _ error) error {
+		//var hdr *tar.Header
+		//target, err := os.Open(loc)
+		//if err != nil { return err }
+		//targetInfo, err := f.Stat()
+		//if err != nil { return err }
+
 		return nil
 	}
 
@@ -100,7 +120,7 @@ func t(tr *tar.Reader) error {
 }
 
 func x(tr *tar.Reader) error {
-		u, err := user.Current()
+		u, err := user.Current() // as of know we overwrite the original user with the current.
 		if err != nil { return err }
 	for {
 		hdr, err := tr.Next()
@@ -110,14 +130,12 @@ func x(tr *tar.Reader) error {
 
 		switch hdr.Typeflag {
 		case tar.TypeReg, tar.TypeRegA:
-			f, err := os.OpenFile(hdr.Name, os.O_CREATE | os.O_WRONLY, fi.Mode())
+			f, err := os.OpenFile(hdr.Name, os.O_CREATE | os.O_WRONLY, fi.Mode()) // don't clobber by default
 			if err != nil {
 				return err
 			}
 			defer f.Close()
-			buf := make([]byte, hdr.Size) //bufio?
-			if _, err := tr.Read(buf); err != nil { return err }
-			if _, err := f.Write(buf); err != nil { return err }
+			if _, err := io.CopyN(f, tr, hdr.Size); err != nil { return err }
 		case tar.TypeLink:
 			//hard link
 		case tar.TypeSymlink:
@@ -137,11 +155,13 @@ func x(tr *tar.Reader) error {
 		default:
 			log.Printf("Unknown type for %s\n", hdr.Name)
 		}
+		//TODO: error checking
 		uid, _ := strconv.Atoi(u.Uid)
 		gid, _ := strconv.Atoi(u.Gid)
 		if err := os.Chown(hdr.Name, uid, gid); err != nil { return err }
+		//TODO: fix ModTime
 		if err := os.Chmod(hdr.Name, fi.Mode()); err != nil { return err }
-		if err := os.Chtimes(hdr.Name, _, hdr.ModTime); err != nil { return err }
+		if err := os.Chtimes(hdr.Name, fi.ModTime(), hdr.ModTime); err != nil { return err }
 	}
 	return nil //shouldn't get here
 }
