@@ -2,3 +2,6 @@
 stargo
 notes
 template.go
+usr/*
+.INSTALL
+.PKGINFO
