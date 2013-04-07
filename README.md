@@ -9,8 +9,8 @@ Basic usage:
 - available options are `z` for gzipped files, `c` for create, `x` for extract, and `t` for list.
 
 Example usage:
-- To list the contents of a gzipped tar file: `stargo zt < tarfile.tar`
+- To list the contents of a gzipped tar file: `stargo zt < tarfile.tar.gz`
 - To extract a tar file to the current directory: `stargo x < tarfile.tar`
-- To create a gzipped archive: `stargo zc somefile somedir/ ... > file.tar.gz
+- To create a gzipped archive: `stargo zc somefile somedir/ ... > file.tar.gz`
 
 If you attempt to extract or create tar files with any of the more unusual filetypes supported by tar (such as block devices) you won't have much luck yet.
