@@ -67,6 +67,7 @@ func c(locs []string, zflag bool) {
 		if err != nil {
 			return err
 		}
+		hdr.Name = loc // if we don't do this we only get the basename
 		tw.WriteHeader(hdr)
 		target, err := os.Open(loc)
 		if err != nil {
