@@ -1,0 +1,4 @@
+*.tar*
+stargo
+notes
+template.go
