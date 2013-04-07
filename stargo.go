@@ -62,18 +62,22 @@ func c(locs []string, zflag bool) {
 	tw := tar.NewWriter(f)
 	defer tw.Close()
 
-	c_file := func(loc string, fi os.FileInfo, _ error) error {
-		/*
+	c_file := func(loc string, fi os.FileInfo, _ error) error {  // needs to be a closure to access the tar writer
 		hdr, err := tar.FileInfoHeader(fi, loc)
 		if err != nil {
 			return err
 		}
-		
+		tw.WriteHeader(hdr)
 		target, err := os.Open(loc)
 		if err != nil {
 			return err
 		}
-		*/
+		n, err := io.CopyN(tw, target, hdr.Size)
+		if n != hdr.Size {
+			if err != nil || err != io.EOF {
+				return err
+			}
+		}
 
 		return nil
 	}

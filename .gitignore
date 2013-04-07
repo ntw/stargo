@@ -5,3 +5,4 @@ template.go
 usr/*
 .INSTALL
 .PKGINFO
+testing/*
